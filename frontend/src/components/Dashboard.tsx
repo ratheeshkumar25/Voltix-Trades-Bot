@@ -1,39 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-// import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { AdvancedRealTimeChart } from "react-ts-tradingview-widgets";
-import { LayoutDashboard, Wallet, ArrowRightLeft, Coins } from 'lucide-react';
+import { Wallet, ArrowRightLeft, Coins, Shield } from 'lucide-react';
 import TradePanel from './TradePanel';
 import StrategyPanel from './StrategyPanel';
 import PositionsPanel from './PositionsPanel';
 import SignalsPanel from './SignalsPanel';
+import MarketNews from './MarketNews';
 import logo from '../assets/voltix-logo.jpg';
 
-const Dashboard: React.FC = () => {
+type AccountType = 'metatrader' | 'binance' | 'ctrader' | 'gmail';
+
+interface DashboardProps {
+    accountType: AccountType;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ accountType }) => {
     const [exchange, setExchange] = useState('binance');
     const [symbol, setSymbol] = useState('BTCUSDT');
     const [balance, setBalance] = useState(0);
-    const [data] = useState([
-        { name: '10:00', price: 50000 },
-        { name: '10:05', price: 50200 },
-        { name: '10:10', price: 50100 },
-        { name: '10:15', price: 50400 },
-        { name: '10:20', price: 50300 },
-        { name: '10:25', price: 50600 },
-    ]);
+
+    const isViewOnly = accountType === 'gmail';
 
     useEffect(() => {
         const fetchBalance = async () => {
-            // try {
-            //     const res = await axios.get(`http://localhost:3000/api/balance/${exchange}`);
-            //     setBalance(res.data.balance);
-            // } catch (err) {
-            //     console.error(err);
-            // }
             setBalance(10000); // Static balance
         };
         fetchBalance();
     }, [exchange]);
+
+    const getAccountBadge = () => {
+        const badges = {
+            metatrader: { label: 'MetaTrader', color: 'bg-blue-500' },
+            binance: { label: 'Binance', color: 'bg-yellow-500' },
+            ctrader: { label: 'cTrader', color: 'bg-green-500' },
+            gmail: { label: 'View Only', color: 'bg-gray-500' }
+        };
+        const badge = badges[accountType];
+        return (
+            <div className={`flex items-center gap-2 ${badge.color} px-4 py-2 rounded-lg text-white`}>
+                <Shield size={18} />
+                <span className="font-bold">{badge.label}</span>
+            </div>
+        );
+    };
 
     return (
         <div className="min-h-screen bg-background p-6">
@@ -43,16 +53,38 @@ const Dashboard: React.FC = () => {
                     Voltix Dashboard
                 </h1>
                 <div className="flex items-center gap-4">
+                    {!isViewOnly && (
+                        <div className="flex items-center gap-2 bg-surface px-4 py-2 rounded-lg">
+                            <Wallet size={18} className="text-secondary" />
+                            <span className="font-mono text-lg">${balance.toFixed(2)}</span>
+                        </div>
+                    )}
+                    {getAccountBadge()}
+                </div>
+            </header>
+
+            {!isViewOnly && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="flex items-center gap-2 bg-surface px-4 py-2 rounded-lg">
-                        <Wallet size={18} className="text-secondary" />
-                        <span className="font-mono text-lg">${balance.toFixed(2)}</span>
+                        <ArrowRightLeft size={18} className="text-secondary" />
+                        <label className="text-sm text-secondary">Exchange:</label>
+                        <select
+                            value={exchange}
+                            onChange={(e) => setExchange(e.target.value)}
+                            className="bg-background px-2 py-1 rounded border border-secondary focus:border-primary outline-none"
+                        >
+                            <option value="binance">Binance</option>
+                            <option value="metatrader">MetaTrader</option>
+                            <option value="ctrader">cTrader</option>
+                        </select>
                     </div>
                     <div className="flex items-center gap-2 bg-surface px-4 py-2 rounded-lg">
                         <Coins size={18} className="text-secondary" />
+                        <label className="text-sm text-secondary">Symbol:</label>
                         <select
                             value={symbol}
                             onChange={(e) => setSymbol(e.target.value)}
-                            className="bg-transparent outline-none font-bold text-accent"
+                            className="bg-background px-2 py-1 rounded border border-secondary focus:border-primary outline-none"
                         >
                             <option value="BTCUSDT">BTC/USDT</option>
                             <option value="ETHUSDT">ETH/USDT</option>
@@ -60,20 +92,8 @@ const Dashboard: React.FC = () => {
                             <option value="XRPUSDT">XRP/USDT</option>
                         </select>
                     </div>
-                    <div className="flex items-center gap-2 bg-surface px-4 py-2 rounded-lg">
-                        <ArrowRightLeft size={18} className="text-secondary" />
-                        <select
-                            value={exchange}
-                            onChange={(e) => setExchange(e.target.value)}
-                            className="bg-transparent outline-none font-bold text-accent"
-                        >
-                            <option value="binance">Binance</option>
-                            <option value="mt5">MetaTrader 5</option>
-                            <option value="ctrader">cTrader</option>
-                        </select>
-                    </div>
                 </div>
-            </header>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-surface p-6 rounded-lg shadow-lg">
@@ -92,14 +112,22 @@ const Dashboard: React.FC = () => {
                             ]}
                         />
                     </div>
-                    <StrategyPanel />
+                    {!isViewOnly && <StrategyPanel />}
                 </div>
 
                 <div className="space-y-6">
-                    <TradePanel exchange={exchange} symbol={symbol} onSymbolChange={setSymbol} />
-
-                    <PositionsPanel />
-                    <SignalsPanel />
+                    {!isViewOnly ? (
+                        <>
+                            <TradePanel exchange={exchange} symbol={symbol} onSymbolChange={setSymbol} />
+                            <PositionsPanel />
+                            <SignalsPanel />
+                        </>
+                    ) : (
+                        <>
+                            <SignalsPanel />
+                            <MarketNews />
+                        </>
+                    )}
                 </div>
             </div>
         </div>

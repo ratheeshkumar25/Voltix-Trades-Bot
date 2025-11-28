@@ -4,21 +4,23 @@ import logo from '../assets/voltix-logo.jpg';
 import bgImage from '../assets/login-bg.jpg';
 
 interface LoginProps {
-    onLogin: (token: string) => void;
+    onLogin: (token: string, accountType: AccountType) => void;
 }
 
-type AccountType = 'metatrader' | 'binance' | 'ctrader' | 'gmail' | null;
+type AccountType = 'metatrader' | 'binance' | 'ctrader' | 'gmail';
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-    const [accountType, setAccountType] = useState<AccountType>(null);
+    const [accountType, setAccountType] = useState<AccountType | null>(null);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Mock authentication - in production, this would call the backend with accountType
-        onLogin(`mock-token-${accountType}`);
+        // Mock authentication - pass account type to parent
+        if (accountType) {
+            onLogin(`mock-token-${accountType}`, accountType);
+        }
     };
 
     const accountOptions = [
