@@ -1,23 +1,35 @@
-import { useState } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 
-type AccountType = 'metatrader' | 'binance' | 'ctrader' | 'gmail';
+function AppContent() {
+  const { user, token, login, loading } = useAuth();
 
-function App() {
-  const [token, setToken] = useState<string | null>(null);
-  const [accountType, setAccountType] = useState<AccountType | null>(null);
-
-  const handleLogin = (loginToken: string, loginAccountType: AccountType) => {
-    setToken(loginToken);
-    setAccountType(loginAccountType);
-  };
-
-  if (!token || !accountType) {
-    return <Login onLogin={handleLogin} />;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-secondary">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
-  return <Dashboard accountType={accountType} />;
+  if (!token || !user) {
+    return <Login onLogin={login} />;
+  }
+
+  // User is authenticated, show dashboard
+  return <Dashboard />;
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
 }
 
 export default App;

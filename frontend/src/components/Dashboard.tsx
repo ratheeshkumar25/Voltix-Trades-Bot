@@ -1,27 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { AdvancedRealTimeChart } from "react-ts-tradingview-widgets";
 import { Wallet, ArrowRightLeft, Coins, Shield, Maximize2, Minimize2 } from 'lucide-react';
 import TradePanel from './TradePanel';
 import StrategyPanel from './StrategyPanel';
 import PositionsPanel from './PositionsPanel';
 import SignalsPanel from './SignalsPanel';
-import MarketNews from './MarketNews';
 import logo from '../assets/voltix-logo.jpg';
+import { useAuth } from '../contexts/AuthContext';
 
-type AccountType = 'metatrader' | 'binance' | 'ctrader' | 'gmail';
-
-interface DashboardProps {
-    accountType: AccountType;
-}
-
-const Dashboard: React.FC<DashboardProps> = ({ accountType }) => {
+const Dashboard: React.FC = () => {
+    const { user, subscription, logout } = useAuth();
     const [exchange, setExchange] = useState('binance');
     const [symbol, setSymbol] = useState('BTCUSDT');
     const [balance, setBalance] = useState(0);
     const [isChartFullscreen, setIsChartFullscreen] = useState(false);
-
-    const isViewOnly = accountType === 'gmail';
 
     useEffect(() => {
         const fetchBalance = async () => {
@@ -46,18 +38,21 @@ const Dashboard: React.FC<DashboardProps> = ({ accountType }) => {
         setIsChartFullscreen(!isChartFullscreen);
     };
 
-    const getAccountBadge = () => {
-        const badges = {
-            metatrader: { label: 'MetaTrader', color: 'bg-blue-500' },
-            binance: { label: 'Binance', color: 'bg-yellow-500' },
-            ctrader: { label: 'cTrader', color: 'bg-green-500' },
-            gmail: { label: 'View Only', color: 'bg-gray-500' }
-        };
-        const badge = badges[accountType];
+    // Show subscription status badge
+    const getSubscriptionBadge = () => {
+        if (!subscription) return null;
+
+        const isExpiringSoon = subscription.days_remaining <= 2;
+        const color = subscription.status === 'active'
+            ? (isExpiringSoon ? 'bg-yellow-500' : 'bg-emerald-500')
+            : 'bg-red-500';
+
         return (
-            <div className={`flex items-center gap-2 ${badge.color} px-4 py-2 rounded-lg text-white`}>
+            <div className={`flex items-center gap-2 ${color} px-4 py-2 rounded-lg text-white`}>
                 <Shield size={18} />
-                <span className="font-bold">{badge.label}</span>
+                <span className="font-bold">
+                    {subscription.plan.toUpperCase()} - {subscription.days_remaining} days left
+                </span>
             </div>
         );
     };
@@ -65,52 +60,57 @@ const Dashboard: React.FC<DashboardProps> = ({ accountType }) => {
     return (
         <div className="min-h-screen bg-background p-6">
             <header className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-                    <img src={logo} alt="Voltix Logo" className="h-10 w-auto rounded" />
-                    Voltix Dashboard
-                </h1>
                 <div className="flex items-center gap-4">
-                    {!isViewOnly && (
-                        <div className="flex items-center gap-2 bg-surface px-4 py-2 rounded-lg">
-                            <Wallet size={18} className="text-secondary" />
-                            <span className="font-mono text-lg">${balance.toFixed(2)}</span>
-                        </div>
-                    )}
-                    {getAccountBadge()}
+                    <img src={logo} alt="Voltix Logo" className="h-10 w-auto rounded" />
+                    <div>
+                        <h1 className="text-3xl font-bold text-primary">Voltix Dashboard</h1>
+                        {user && <p className="text-sm text-secondary">{user.email}</p>}
+                    </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 bg-surface px-4 py-2 rounded-lg">
+                        <Wallet size={18} className="text-secondary" />
+                        <span className="font-mono text-lg">${balance.toFixed(2)}</span>
+                    </div>
+                    {getSubscriptionBadge()}
+                    <button
+                        onClick={logout}
+                        className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-white font-bold transition-colors"
+                    >
+                        Logout
+                    </button>
                 </div>
             </header>
 
-            {!isViewOnly && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div className="flex items-center gap-2 bg-surface px-4 py-2 rounded-lg">
-                        <ArrowRightLeft size={18} className="text-secondary" />
-                        <label className="text-sm text-secondary">Exchange:</label>
-                        <select
-                            value={exchange}
-                            onChange={(e) => setExchange(e.target.value)}
-                            className="bg-background px-2 py-1 rounded border border-secondary focus:border-primary outline-none"
-                        >
-                            <option value="binance">Binance</option>
-                            <option value="metatrader">MetaTrader</option>
-                            <option value="ctrader">cTrader</option>
-                        </select>
-                    </div>
-                    <div className="flex items-center gap-2 bg-surface px-4 py-2 rounded-lg">
-                        <Coins size={18} className="text-secondary" />
-                        <label className="text-sm text-secondary">Symbol:</label>
-                        <select
-                            value={symbol}
-                            onChange={(e) => setSymbol(e.target.value)}
-                            className="bg-background px-2 py-1 rounded border border-secondary focus:border-primary outline-none"
-                        >
-                            <option value="BTCUSDT">BTC/USDT</option>
-                            <option value="ETHUSDT">ETH/USDT</option>
-                            <option value="SOLUSDT">SOL/USDT</option>
-                            <option value="XRPUSDT">XRP/USDT</option>
-                        </select>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="flex items-center gap-2 bg-surface px-4 py-2 rounded-lg">
+                    <ArrowRightLeft size={18} className="text-secondary" />
+                    <label className="text-sm text-secondary">Exchange:</label>
+                    <select
+                        value={exchange}
+                        onChange={(e) => setExchange(e.target.value)}
+                        className="bg-background px-2 py-1 rounded border border-secondary focus:border-primary outline-none"
+                    >
+                        <option value="binance">Binance</option>
+                        <option value="metatrader">MetaTrader</option>
+                        <option value="ctrader">cTrader</option>
+                    </select>
                 </div>
-            )}
+                <div className="flex items-center gap-2 bg-surface px-4 py-2 rounded-lg">
+                    <Coins size={18} className="text-secondary" />
+                    <label className="text-sm text-secondary">Symbol:</label>
+                    <select
+                        value={symbol}
+                        onChange={(e) => setSymbol(e.target.value)}
+                        className="bg-background px-2 py-1 rounded border border-secondary focus:border-primary outline-none"
+                    >
+                        <option value="BTCUSDT">BTC/USDT</option>
+                        <option value="ETHUSDT">ETH/USDT</option>
+                        <option value="SOLUSDT">SOL/USDT</option>
+                        <option value="XRPUSDT">XRP/USDT</option>
+                    </select>
+                </div>
+            </div>
 
             {/* Fullscreen Chart Overlay */}
             {isChartFullscreen && (
@@ -171,22 +171,13 @@ const Dashboard: React.FC<DashboardProps> = ({ accountType }) => {
                             ]}
                         />
                     </div>
-                    {!isViewOnly && <StrategyPanel />}
+                    <StrategyPanel />
                 </div>
 
                 <div className="space-y-6">
-                    {!isViewOnly ? (
-                        <>
-                            <TradePanel exchange={exchange} symbol={symbol} onSymbolChange={setSymbol} />
-                            <PositionsPanel />
-                            <SignalsPanel />
-                        </>
-                    ) : (
-                        <>
-                            <SignalsPanel />
-                            <MarketNews />
-                        </>
-                    )}
+                    <TradePanel exchange={exchange} symbol={symbol} onSymbolChange={setSymbol} />
+                    <PositionsPanel />
+                    <SignalsPanel />
                 </div>
             </div>
         </div>
