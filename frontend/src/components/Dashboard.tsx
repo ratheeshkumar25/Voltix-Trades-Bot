@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AdvancedRealTimeChart } from "react-ts-tradingview-widgets";
-import { Wallet, ArrowRightLeft, Coins, Shield } from 'lucide-react';
+import { Wallet, ArrowRightLeft, Coins, Shield, Maximize2, Minimize2 } from 'lucide-react';
 import TradePanel from './TradePanel';
 import StrategyPanel from './StrategyPanel';
 import PositionsPanel from './PositionsPanel';
@@ -19,6 +19,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accountType }) => {
     const [exchange, setExchange] = useState('binance');
     const [symbol, setSymbol] = useState('BTCUSDT');
     const [balance, setBalance] = useState(0);
+    const [isChartFullscreen, setIsChartFullscreen] = useState(false);
 
     const isViewOnly = accountType === 'gmail';
 
@@ -28,6 +29,22 @@ const Dashboard: React.FC<DashboardProps> = ({ accountType }) => {
         };
         fetchBalance();
     }, [exchange]);
+
+    // Handle ESC key to exit fullscreen
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isChartFullscreen) {
+                setIsChartFullscreen(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isChartFullscreen]);
+
+    const toggleChartFullscreen = () => {
+        setIsChartFullscreen(!isChartFullscreen);
+    };
 
     const getAccountBadge = () => {
         const badges = {
@@ -95,9 +112,51 @@ const Dashboard: React.FC<DashboardProps> = ({ accountType }) => {
                 </div>
             )}
 
+            {/* Fullscreen Chart Overlay */}
+            {isChartFullscreen && (
+                <div className="fixed inset-0 z-50 bg-background p-6">
+                    <div className="h-full flex flex-col">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-2xl font-bold">Market Overview - {symbol} ({exchange.toUpperCase()})</h3>
+                            <button
+                                onClick={toggleChartFullscreen}
+                                className="flex items-center gap-2 bg-surface hover:bg-surface/80 px-4 py-2 rounded-lg transition-colors"
+                            >
+                                <Minimize2 size={20} />
+                                <span>Exit Fullscreen</span>
+                            </button>
+                        </div>
+                        <div className="flex-1">
+                            <AdvancedRealTimeChart
+                                theme="dark"
+                                symbol={symbol}
+                                autosize
+                                hide_side_toolbar={false}
+                                allow_symbol_change={true}
+                                studies={[
+                                    "PivotPointsStandard@tv-basicstudies",
+                                    "RSI@tv-basicstudies",
+                                    "MACD@tv-basicstudies"
+                                ]}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-surface p-6 rounded-lg shadow-lg">
-                    <h3 className="text-xl font-bold mb-4">Market Overview ({exchange.toUpperCase()})</h3>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-bold">Market Overview ({exchange.toUpperCase()})</h3>
+                        <button
+                            onClick={toggleChartFullscreen}
+                            className="flex items-center gap-2 bg-background hover:bg-background/80 px-3 py-2 rounded-lg transition-colors"
+                            title="Toggle Fullscreen"
+                        >
+                            <Maximize2 size={18} />
+                            <span className="text-sm">Fullscreen</span>
+                        </button>
+                    </div>
                     <div className="h-[500px]">
                         <AdvancedRealTimeChart
                             theme="dark"
