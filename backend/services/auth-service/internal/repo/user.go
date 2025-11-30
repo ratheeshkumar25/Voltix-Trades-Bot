@@ -41,7 +41,7 @@ func (r *AuthRepository) GetUserByGoogleID(googleID string) (*models.User, error
 
 // Authenticate user by email and password
 func (r *AuthRepository) AuthenticateUser(email, password string) (*models.User, error) {
-	var user models.User
+	var user *models.User
 	result := r.DB.Where("email = ?", email).First(&user)
 	if result.Error != nil {
 		return nil, result.Error
