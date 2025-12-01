@@ -2,12 +2,10 @@ package repo
 
 import (
 	"ratheeshkumar25/github.com/trading_bot/auth-service/internal/models"
-	"ratheeshkumar25/github.com/trading_bot/auth-service/pkg/hashpasscode"
 
 	"time"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // Create user
@@ -41,14 +39,11 @@ func (r *AuthRepository) GetUserByGoogleID(googleID string) (*models.User, error
 
 // Authenticate user by email and password
 func (r *AuthRepository) AuthenticateUser(email, password string) (*models.User, error) {
-	var user *models.User
+	var user models.User
 	result := r.DB.Where("email = ?", email).First(&user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-
-	// Verify password using bcrypt
-	if err := hashpasscode.CheckPassword()
 
 	return &user, nil
 }

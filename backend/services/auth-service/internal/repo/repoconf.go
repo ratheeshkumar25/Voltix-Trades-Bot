@@ -22,7 +22,7 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository {
 //Interface for AuthRepository
 
 type AuthRepositoryInterface interface {
-	CreateUser(user *models.User) (uint, error)
+	CreateUser(user *models.User) (uuid.UUID, error)
 	GetUserByEmail(email string) (*models.User, error)
 	GetUserByID(id uuid.UUID) (*models.User, error)
 	GetUserByGoogleID(googleID string) (*models.User, error)
@@ -30,4 +30,8 @@ type AuthRepositoryInterface interface {
 	CreateTrialSubscription(userID uuid.UUID) error
 	GetUserSubscription(userID uuid.UUID) (*models.Subscription, error)
 	UpdateUserStatus(user *models.User) error
+	CreateSession(session *models.Session) error
+	AddExchangeCredential(cred *models.ExchangeCredential) error
+	GetExchangeCredentials(userID uuid.UUID) ([]models.ExchangeCredential, error)
+	UpdateExchangeCredential(cred *models.ExchangeCredential) error
 }
