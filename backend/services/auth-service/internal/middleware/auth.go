@@ -75,7 +75,7 @@ func SubscriptionMiddleware(c *fiber.Ctx) error {
 		return c.Status(403).JSON(fiber.Map{
 			"error":          "Subscription expired",
 			"message":        "Your trial/subscription has expired. Please upgrade to continue.",
-			"plan":           subscription.PlanType,
+			"plan":           subscription.Subscription,
 			"expired_at":     subscription.EndDate,
 			"days_remaining": subscription.DaysRemaining(),
 		})

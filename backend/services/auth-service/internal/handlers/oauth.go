@@ -5,24 +5,22 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-	"ratheeshkumar25/github.com/trading_bot/auth-service/internal/database"
 	"ratheeshkumar25/github.com/trading_bot/auth-service/internal/models"
 	"ratheeshkumar25/github.com/trading_bot/auth-service/internal/services"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
 
 var (
 	googleOAuthConfig *oauth2.Config
-	userService       = services.NewUserService()
-	
 )
 
 // InitOAuth initializes Google OAuth configuration
-func InitOAuth() {
+func (h *AuthServiceHandler) InitOAuth() {
 	googleOAuthConfig = &oauth2.Config{
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
@@ -36,7 +34,7 @@ func InitOAuth() {
 }
 
 // GoogleLoginHandler initiates Google OAuth flow
-func GoogleLoginHandler(c *fiber.Ctx) error {
+func (h *AuthServiceHandler) GoogleLoginHandler(c *fiber.Ctx) error {
 	state, err := services.GenerateSecureToken(32)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to generate state"})
@@ -56,7 +54,7 @@ func GoogleLoginHandler(c *fiber.Ctx) error {
 }
 
 // GoogleCallbackHandler handles Google OAuth callback
-func GoogleCallbackHandler(c *fiber.Ctx) error {
+func (h *AuthServiceHandler) GoogleCallbackHandler(c *fiber.Ctx) error {
 	// Validate state
 	state := c.Query("state")
 	storedState := c.Cookies("oauth_state")
@@ -88,10 +86,10 @@ func GoogleCallbackHandler(c *fiber.Ctx) error {
 	json.Unmarshal(data, &googleUser)
 
 	// Check if user exists
-	user, err := userService.GetUserByGoogleID(googleUser.ID)
+	user, err := h.SVC.GetUserByGoogleID(googleUser.ID)
 	if err != nil {
 		// Create new user
-		user, err = userService.CreateUser(googleUser.Email, "", &googleUser.ID)
+		user, err = h.SVC.CreateUser(googleUser.Email, "", &googleUser.ID)
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": "Failed to create user"})
 		}
@@ -109,7 +107,9 @@ func GoogleCallbackHandler(c *fiber.Ctx) error {
 		Token:     jwtToken,
 		ExpiresAt: token.Expiry,
 	}
-	database.ConnectDB(services.GetConfig()).Create(session)
+	if err := h.SVC.CreateSession(session); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to create session"})
+	}
 
 	return c.JSON(fiber.Map{
 		"token": jwtToken,
@@ -122,7 +122,7 @@ func GoogleCallbackHandler(c *fiber.Ctx) error {
 }
 
 // EmailLoginHandler handles email/password login
-func EmailLoginHandler(c *fiber.Ctx) error {
+func (h *AuthServiceHandler) EmailLoginHandler(c *fiber.Ctx) error {
 	type LoginRequest struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -134,7 +134,7 @@ func EmailLoginHandler(c *fiber.Ctx) error {
 	}
 
 	// Authenticate user
-	user, err := userService.AuthenticateUser(req.Email, req.Password)
+	user, err := h.SVC.AuthenticateUser(req.Email, req.Password)
 	if err != nil {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid credentials"})
 	}
@@ -151,7 +151,9 @@ func EmailLoginHandler(c *fiber.Ctx) error {
 		Token:     jwtToken,
 		ExpiresAt: time.Now().Add(24 * time.Hour), // Match JWT expiration
 	}
-	database.DB.Create(session)
+	if err := h.SVC.CreateSession(session); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to create session"})
+	}
 
 	return c.JSON(fiber.Map{
 		"token": jwtToken,
@@ -164,7 +166,7 @@ func EmailLoginHandler(c *fiber.Ctx) error {
 }
 
 // RegisterHandler handles user registration
-func RegisterHandler(c *fiber.Ctx) error {
+func (h *AuthServiceHandler) RegisterHandler(c *fiber.Ctx) error {
 	type RegisterRequest struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -176,7 +178,7 @@ func RegisterHandler(c *fiber.Ctx) error {
 	}
 
 	// Create user with trial
-	user, err := userService.CreateUser(req.Email, req.Password, nil)
+	user, err := h.SVC.CreateUser(req.Email, req.Password, nil)
 	if err != nil {
 		if err == services.ErrEmailExists {
 			return c.Status(409).JSON(fiber.Map{"error": "Email already exists"})
@@ -202,12 +204,12 @@ func RegisterHandler(c *fiber.Ctx) error {
 }
 
 // MeHandler returns current user info
-func MeHandler(c *fiber.Ctx) error {
+func (h *AuthServiceHandler) MeHandler(c *fiber.Ctx) error {
 	// Get user from context (set by auth middleware)
 	user := c.Locals("user").(*models.User)
 
 	// Get subscription
-	subscription, err := userService.GetUserSubscription(user.ID)
+	subscription, err := h.SVC.GetUserSubscription(user.ID)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to get subscription"})
 	}
@@ -217,12 +219,66 @@ func MeHandler(c *fiber.Ctx) error {
 		"email": user.Email,
 		"role":  user.Role,
 		"subscription": fiber.Map{
-			"plan":           subscription.PlanType,
+			"plan":           subscription.Subscription,
 			"status":         subscription.Status,
 			"days_remaining": subscription.DaysRemaining(),
 			"end_date":       subscription.EndDate,
 		},
 	})
+}
+
+// AddExchangeCredential adds a new exchange credential
+func (h *AuthServiceHandler) AddExchangeCredential(c *fiber.Ctx) error {
+	type ExchangeRequest struct {
+		ExchangeType models.ExchangeType `json:"exchange_type"`
+		APIKey       string              `json:"api_key"`
+		APISecret    string              `json:"api_secret"`
+	}
+	var req ExchangeRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	}
+
+	user := c.Locals("user").(*models.User)
+	cred, err := h.SVC.AddExchangeCredential(user.ID, req.ExchangeType, req.APIKey, req.APISecret)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to add exchange credential"})
+	}
+
+	return c.Status(201).JSON(cred)
+}
+
+// GetExchangeCredentials gets all exchange credentials for a user
+func (h *AuthServiceHandler) GetExchangeCredentials(c *fiber.Ctx) error {
+	user := c.Locals("user").(*models.User)
+	creds, err := h.SVC.GetExchangeCredentials(user.ID)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to get exchange credentials"})
+	}
+	return c.JSON(creds)
+}
+
+// SwitchExchangeAccount switches the active exchange account
+func (h *AuthServiceHandler) SwitchExchangeAccount(c *fiber.Ctx) error {
+	type SwitchRequest struct {
+		CredentialID string `json:"credential_id"`
+	}
+	var req SwitchRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	}
+
+	credentialID, err := uuid.Parse(req.CredentialID)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid credential ID"})
+	}
+
+	user := c.Locals("user").(*models.User)
+	if err := h.SVC.SwitchExchangeAccount(user.ID, credentialID); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to switch exchange account"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Exchange account switched successfully"})
 }
 
 func getEnv(key, fallback string) string {

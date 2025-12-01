@@ -12,6 +12,7 @@ import (
 )
 
 // DB is the global database connection
+var DB *gorm.DB
 
 func ConnectDB(config *config.Config) *gorm.DB {
 	host := config.DBHost
@@ -27,12 +28,12 @@ func ConnectDB(config *config.Config) *gorm.DB {
 	//construct the DSN connection correctly
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC", host, user, password, dbname, port, sslmode)
 
-	DB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	err = DB.AutoMigrate(
+	err = db.AutoMigrate(
 		&models.User{},
 		&models.Subscription{},
 		&models.Notification{},
@@ -43,6 +44,7 @@ func ConnectDB(config *config.Config) *gorm.DB {
 		log.Printf("error while migrating %v", err.Error())
 		return nil
 	}
-	return DB
+	DB = db // Assign to global variable
+	return db
 
 }

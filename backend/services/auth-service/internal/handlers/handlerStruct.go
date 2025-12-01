@@ -6,11 +6,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type AuthServiceHamdler struct {
-	SVC  services.UserService
+type AuthServiceHandler struct {
+	SVC  services.UserServiceInterface
 	Http *fiber.App
 }
 
-func NewAuthServiceHandler(svc services.UserService, app *fiber.App) *AuthServiceHamdler {
-	return &AuthServiceHamdler{SVC: svc, Http: app}
+func NewAuthServiceHandler(svc services.UserServiceInterface, app *fiber.App) *AuthServiceHandler {
+	return &AuthServiceHandler{SVC: svc, Http: app}
 }

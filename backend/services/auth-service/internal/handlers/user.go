@@ -1,6 +1,11 @@
 package handlers
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"ratheeshkumar25/github.com/trading_bot/auth-service/internal/models"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+)
 
 type UseAccount struct {
 	Email    string `json:"email"`
@@ -18,16 +23,16 @@ type UseAccount struct {
 //@Failure 500 {object} HttpResponse
 //@Router api/v1/user [post]
 
-func (h *AuthServiceHamdler) CreateUser(c *fiber.Ctx) error {
+func (h *AuthServiceHandler) CreateUser(c *fiber.Ctx) error {
 	var user UseAccount
 	if err := c.BodyParser(&user); err != nil {
-		return err
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 	}
-	resp, err := h.SVC.CreateUser(&user)
+	resp, err := h.SVC.CreateUser(user.Email, user.Password, nil)
 	if err != nil {
-		return h.Http.HttpResponseInternalServerErrorRequest(c, err)
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	return h.Http.HttpResponseok(c, resp)
+	return c.Status(201).JSON(resp)
 }
 
 // @Id Get User By Email
@@ -40,16 +45,16 @@ func (h *AuthServiceHamdler) CreateUser(c *fiber.Ctx) error {
 // @Failure 400 {object} HttpResponse
 // @Failure 500 {object} HttpResponse
 // @Router api/v1/user/{email} [get]
-func (h *AuthServiceHamdler) GetUserByEmail(c *fiber.Ctx) error {
-	var user UseAccount
-	if err := c.BodyParser(&user); err != nil {
-		return err
+func (h *AuthServiceHandler) GetUserByEmail(c *fiber.Ctx) error {
+	email := c.Params("email")
+	if email == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "Email is required"})
 	}
-	resp, err := h.SVC.GetUserByEmail(user.Email)
+	resp, err := h.SVC.GetUserByEmail(email)
 	if err != nil {
-		return h.Http.HttpResponseInternalServerErrorRequest(c, err)
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	return h.Http.HttpResponseok(c, resp)
+	return c.JSON(resp)
 }
 
 //@Id Get User By ID
@@ -63,16 +68,17 @@ func (h *AuthServiceHamdler) GetUserByEmail(c *fiber.Ctx) error {
 //@Failure 500 {object} HttpResponse
 //@Router api/v1/user/{id} [get]
 
-func (h *AuthServiceHamdler) GetUserByID(c *fiber.Ctx) error {
-	var user UseAccount
-	if err := c.BodyParser(&user); err != nil {
-		return err
-	}
-	resp, err := h.SVC.GetUserByID(user.ID)
+func (h *AuthServiceHandler) GetUserByID(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := uuid.Parse(idStr)
 	if err != nil {
-		return h.Http.HttpResponseInternalServerErrorRequest(c, err)
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID"})
 	}
-	return h.Http.HttpResponseok(c, resp)
+	resp, err := h.SVC.GetUserByID(id)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(resp)
 }
 
 //@Id Get User By Google ID
@@ -86,16 +92,13 @@ func (h *AuthServiceHamdler) GetUserByID(c *fiber.Ctx) error {
 //@Failure 500 {object} HttpResponse
 //@Router api/v1/user/{google_id} [get]
 
-func (h *AuthServiceHamdler) GetUserByGoogleID(c *fiber.Ctx) error {
-	var user UseAccount
-	if err := c.BodyParser(&user); err != nil {
-		return err
-	}
-	resp, err := h.SVC.GetUserByGoogleID(user.GoogleID)
+func (h *AuthServiceHandler) GetUserByGoogleID(c *fiber.Ctx) error {
+	googleID := c.Params("google_id")
+	resp, err := h.SVC.GetUserByGoogleID(googleID)
 	if err != nil {
-		return h.Http.HttpResponseInternalServerErrorRequest(c, err)
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	return h.Http.HttpResponseok(c, resp)
+	return c.JSON(resp)
 }
 
 //@Id Update User
@@ -109,26 +112,28 @@ func (h *AuthServiceHamdler) GetUserByGoogleID(c *fiber.Ctx) error {
 //@Failure 500 {object} HttpResponse
 //@Router api/v1/user [put]
 
-func (h *AuthServiceHamdler) UpdateUser(c *fiber.Ctx) error {
-	var user UseAccount
+func (h *AuthServiceHandler) UpdateUser(c *fiber.Ctx) error {
+	var user models.User
 	if err := c.BodyParser(&user); err != nil {
-		return err
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 	}
+	// Ensure ID is set or get from context if authenticated
+	// For now assuming body has ID
 	resp, err := h.SVC.UpdateUser(&user)
 	if err != nil {
-		return h.Http.HttpResponseInternalServerErrorRequest(c, err)
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	return h.Http.HttpResponseok(c, resp)
+	return c.JSON(resp)
 }
 
-func (h *AuthServiceHamdler) DeleteUser(c *fiber.Ctx) error {
-	var user UseAccount
+func (h *AuthServiceHandler) DeleteUser(c *fiber.Ctx) error {
+	var user models.User
 	if err := c.BodyParser(&user); err != nil {
-		return err
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 	}
 	resp, err := h.SVC.DeleteUser(&user)
 	if err != nil {
-		return h.Http.HttpResponseInternalServerErrorRequest(c, err)
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	return h.Http.HttpResponseok(c, resp)
+	return c.JSON(resp)
 }
