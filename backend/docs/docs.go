@@ -23,14 +23,252 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/auth/account/{account_id}": {
+        "/api/auth/google/callback": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Google OAuth Callback Handler",
+                "operationId": "Google OAuth Callback Handler",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization Code",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "OAuth State",
+                        "name": "state",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/google/login": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Create Google OAuth Handler",
+                "operationId": "Create Google OAuth Handler",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Email Login Handler",
+                "operationId": "Email Login Handler",
+                "parameters": [
+                    {
+                        "description": "Login Request",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/exchange": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Exchange"
+                ],
+                "summary": "List exchange credentials",
+                "operationId": "ListExchange",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Exchange"
+                ],
+                "summary": "Add exchange credential",
+                "operationId": "AddExchange",
+                "parameters": [
+                    {
+                        "description": "Add exchange credential",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ExchangeAddRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/exchange/switch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Exchange"
+                ],
+                "summary": "Switch active exchange credential",
+                "operationId": "SwitchExchange",
+                "parameters": [
+                    {
+                        "description": "Switch credential",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.SwitchExchangeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/account": {
             "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update Account",
                 "consumes": [
                     "application/json"
                 ],
@@ -40,15 +278,9 @@ const docTemplate = `{
                 "tags": [
                     "Accounts"
                 ],
+                "summary": "Update Account",
                 "operationId": "UpdateAccount",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Account ID",
-                        "name": "account_id",
-                        "in": "path",
-                        "required": true
-                    },
                     {
                         "description": "Account Request Body",
                         "name": "body",
@@ -74,6 +306,38 @@ const docTemplate = `{
                     }
                 }
             },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Email Registration Handler",
+                "operationId": "Email Registration Handler",
+                "parameters": [
+                    {
+                        "description": "Register Request",
+                        "name": "register",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.RegisterLogin"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.HttpResponse"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "security": [
                     {
@@ -88,15 +352,6 @@ const docTemplate = `{
                 ],
                 "summary": "Delete Account",
                 "operationId": "DeleteAccount",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Account ID",
-                        "name": "account_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -115,6 +370,50 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.ExchangeAddRequest": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                },
+                "api_secret": {
+                    "type": "string"
+                },
+                "exchange_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.RegisterLogin": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.SwitchExchangeRequest": {
+            "type": "object",
+            "properties": {
+                "credential_id": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.UptAccount": {
             "type": "object",
             "properties": {
@@ -146,7 +445,7 @@ const docTemplate = `{
         }
     },
     "securityDefinitions": {
-        "ApiKeyAuth": {
+        "BearerAuth": {
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

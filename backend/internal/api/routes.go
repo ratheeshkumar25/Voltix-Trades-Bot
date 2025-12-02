@@ -19,12 +19,13 @@ func SetupRoutes(app *fiber.App, h *handler.AuthServiceHandler) {
 	user := api.Group("/v1/user", middleware.AuthMiddleware)
 	// NOTE: handlers `UpdateUser` and `DeleteUser` were not present in handler package
 	// Register only implemented account handlers
+	user.Post("/account", h.EmailRegisterHandler)
 	user.Put("/account", h.UpdateAccountHandler)
 	user.Delete("/account", h.DeleteAccountHandler)
 
-	// Exchange routes (TODO): add when exchange handlers are implemented
-	// exchange := api.Group("/v1/exchange", middleware.AuthMiddleware)
-	// exchange.Post("/", h.AddExchangeCredential)
-	// exchange.Get("/", h.GetExchangeCredentials)
-	// exchange.Post("/switch", h.SwitchExchangeAccount)
+	// Exchange routes
+	exchange := api.Group("/v1/exchange", middleware.AuthMiddleware)
+	exchange.Post("/", h.AddExchangeCredential)
+	exchange.Get("/", h.GetExchangeCredentials)
+	exchange.Post("/switch", h.SwitchExchangeAccount)
 }
