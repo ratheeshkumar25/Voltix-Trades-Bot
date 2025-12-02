@@ -17,10 +17,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Id Create Google OAuth Handler
-var (
-	googleOAuthConfig *oauth2.Config
-)
+var googleOAuthConfig *oauth2.Config
 
 // InitOAuth initializes the Google OAuth configuration
 func InitOAuth(h *AuthServiceHandler) {
@@ -40,13 +37,12 @@ func InitOAuth(h *AuthServiceHandler) {
 	}
 }
 
-//@Id Create Google OAuth Handler
-//@Summary Create Google OAuth Handler
-//@Tags Auth
-//@Produce json
-//@Success 200 {object} httpResponse
-//@Router /api/auth/google/login [get]
-
+// @Id Create Google OAuth Handler
+// @Summary Create Google OAuth Handler
+// @Tags Auth
+// @Produce json
+// @Success 200 {object} http.HttpResponse
+// @Router /api/auth/google/login [get]
 // GoogleLoginHandler initiates Google OAuth flow
 func (h *AuthServiceHandler) GoogleLoginHandler(c *fiber.Ctx) error {
 	var user models.User
@@ -73,15 +69,14 @@ func (h *AuthServiceHandler) GoogleLoginHandler(c *fiber.Ctx) error {
 	return h.App.HttpResponseCreated(c, map[string]string{"url": url})
 }
 
-//@Id Google OAuth Callback Handler
-//@Summary Google OAuth Callback Handler
-//@Tags Auth
-//@Produce json
-//@Param code query string true "Authorization Code"
-//@Param state query string true "OAuth State"
-//@Success 200 {object} httpResponse
-//@Router /api/auth/google/callback [get]
-
+// @Id Google OAuth Callback Handler
+// @Summary Google OAuth Callback Handler
+// @Tags Auth
+// @Produce json
+// @Param code query string true "Authorization Code"
+// @Param state query string true "OAuth State"
+// @Success 200 {object} http.HttpResponse
+// @Router /api/auth/google/callback [get]
 // GoogleCallbackHandler handles Google OAuth callback
 func (h *AuthServiceHandler) GoogleCallbackHandler(c *fiber.Ctx) error {
 	state := c.Query("state")
@@ -160,15 +155,14 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-//@Id Email Login Handler
-//@Summary Email Login Handler
-//@Tags Auth
-//@Accept json
-//@Produce json
-//@Param login body models.EmailLoginRequest true "Login Request"
-//@Success 200 {object} httpResponse
-//@Router /api/auth/login [post]
-
+// @Id Email Login Handler
+// @Summary Email Login Handler
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param login body handler.LoginRequest true "Login Request"
+// @Success 200 {object} http.HttpResponse
+// @Router /api/auth/login [post]
 // EmailLoginHandler handles email/password login
 func (h *AuthServiceHandler) EmailLoginHandler(c *fiber.Ctx) error {
 	var req LoginRequest
@@ -218,15 +212,14 @@ type RegisterLogin struct {
 	Password string `json:"password"`
 }
 
-//@Id Email Registration Handler
-//@Summary Email Registration Handler
-//@Tags Auth
-//@Accept json
-//@Produce json
-//@Param register body models.EmailRegisterRequest true "Register Request"
-//@Success 200 {object} httpResponse
-//@Router /api/auth/register [post]
-
+// @Id Email Registration Handler
+// @Summary Email Registration Handler
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param register body handler.RegisterLogin true "Register Request"
+// @Success 200 {object} http.HttpResponse
+// @Router /api/v1/user/account [post]
 // EmailRegisterHandler handles email/password registration
 func (h *AuthServiceHandler) EmailRegisterHandler(c *fiber.Ctx) error {
 	var req RegisterLogin
@@ -258,16 +251,15 @@ type UptAccount struct {
 }
 
 // @Id				UpdateAccount
-// @Description	Update Account
+// @Summary		Update Account
 // @Tags			Accounts
 // @Accept			json
 // @Produce		json
 // @Success		200	{object}	http.HttpResponse
 // @Failure		500	{object}	http.HttpResponse
 // @Security		BearerAuth
-// @Param			account_id	path	int			true	"Account ID"
 // @Param			body		body	UptAccount	true	"Account Request Body"
-// @Router			/api/v1/auth/account/{account_id} [put]
+// @Router			/api/v1/user/account [put]
 func (h *AuthServiceHandler) UpdateAccountHandler(c *fiber.Ctx) error {
 	// Get account id
 	id := c.Params("id")
@@ -301,8 +293,7 @@ func (h *AuthServiceHandler) UpdateAccountHandler(c *fiber.Ctx) error {
 // @Success   200 {object} http.HttpResponse
 // @Failure   500 {object} http.HttpResponse
 // @Security  BearerAuth
-// @Param     account_id path int true "Account ID"
-// @Router    /api/v1/auth/account/{account_id} [delete]
+// @Router    /api/v1/user/account [delete]
 func (h *AuthServiceHandler) DeleteAccountHandler(c *fiber.Ctx) error {
 	// Get account id
 	id := c.Params("id")
@@ -315,9 +306,5 @@ func (h *AuthServiceHandler) DeleteAccountHandler(c *fiber.Ctx) error {
 		return h.App.HttpResponseInternalServerErrorRequest(c, err)
 	}
 	h.App.Log.Logger.Infof("Account deleted: %v", account.ID)
-	//If error return internal server error
-	if err != nil {
-		return h.App.HttpResponseInternalServerErrorRequest(c, err)
-	}
 	return h.App.HttpResponseOK(c, map[string]string{"message": "account deleted successfully"})
 }

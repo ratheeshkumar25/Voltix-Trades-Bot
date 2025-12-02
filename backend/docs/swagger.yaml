@@ -1,5 +1,33 @@
 basePath: /api
 definitions:
+  handler.ExchangeAddRequest:
+    properties:
+      api_key:
+        type: string
+      api_secret:
+        type: string
+      exchange_type:
+        type: string
+    type: object
+  handler.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handler.RegisterLogin:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handler.SwitchExchangeRequest:
+    properties:
+      credential_id:
+        type: string
+    type: object
   handler.UptAccount:
     properties:
       details:
@@ -32,15 +60,162 @@ info:
   title: Trading Bot API
   version: "1.0"
 paths:
-  /api/v1/auth/account/{account_id}:
+  /api/auth/google/callback:
+    get:
+      operationId: Google OAuth Callback Handler
+      parameters:
+      - description: Authorization Code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: OAuth State
+        in: query
+        name: state
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      summary: Google OAuth Callback Handler
+      tags:
+      - Auth
+  /api/auth/google/login:
+    get:
+      operationId: Create Google OAuth Handler
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      summary: Create Google OAuth Handler
+      tags:
+      - Auth
+  /api/auth/login:
+    post:
+      consumes:
+      - application/json
+      operationId: Email Login Handler
+      parameters:
+      - description: Login Request
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      summary: Email Login Handler
+      tags:
+      - Auth
+  /api/v1/exchange:
+    get:
+      operationId: ListExchange
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      summary: List exchange credentials
+      tags:
+      - Exchange
+    post:
+      consumes:
+      - application/json
+      operationId: AddExchange
+      parameters:
+      - description: Add exchange credential
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ExchangeAddRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      summary: Add exchange credential
+      tags:
+      - Exchange
+  /api/v1/exchange/switch:
+    post:
+      consumes:
+      - application/json
+      operationId: SwitchExchange
+      parameters:
+      - description: Switch credential
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SwitchExchangeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      summary: Switch active exchange credential
+      tags:
+      - Exchange
+  /api/v1/user/account:
     delete:
       operationId: DeleteAccount
-      parameters:
-      - description: Account ID
-        in: path
-        name: account_id
-        required: true
-        type: integer
       produces:
       - application/json
       responses:
@@ -57,17 +232,32 @@ paths:
       summary: Delete Account
       tags:
       - Accounts
+    post:
+      consumes:
+      - application/json
+      operationId: Email Registration Handler
+      parameters:
+      - description: Register Request
+        in: body
+        name: register
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterLogin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      summary: Email Registration Handler
+      tags:
+      - Auth
     put:
       consumes:
       - application/json
-      description: Update Account
       operationId: UpdateAccount
       parameters:
-      - description: Account ID
-        in: path
-        name: account_id
-        required: true
-        type: integer
       - description: Account Request Body
         in: body
         name: body
@@ -87,13 +277,14 @@ paths:
             $ref: '#/definitions/http.HttpResponse'
       security:
       - BearerAuth: []
+      summary: Update Account
       tags:
       - Accounts
 schemes:
 - http
 - https
 securityDefinitions:
-  ApiKeyAuth:
+  BearerAuth:
     in: header
     name: Authorization
     type: apiKey

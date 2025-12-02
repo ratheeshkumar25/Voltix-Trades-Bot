@@ -16,7 +16,7 @@ import (
 // @host localhost:3000
 // @BasePath /api
 // @schemes http https
-// @securityDefinitions.apikey ApiKeyAuth
+// @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
 func main() {
