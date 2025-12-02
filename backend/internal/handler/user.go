@@ -262,7 +262,7 @@ type UptAccount struct {
 // @Tags			Accounts
 // @Accept			json
 // @Produce		json
-// @Success		200	{object}	ViewAccount
+// @Success		200	{object}	http.HttpResponse
 // @Failure		500	{object}	http.HttpResponse
 // @Security		BearerAuth
 // @Param			account_id	path	int			true	"Account ID"
@@ -298,8 +298,8 @@ func (h *AuthServiceHandler) UpdateAccountHandler(c *fiber.Ctx) error {
 // @Summary   Delete Account
 // @Tags      Accounts
 // @Produce   json
-// @Success   200 {object} httpResponse
-// @Failure   500 {object} httpResponse
+// @Success   200 {object} http.HttpResponse
+// @Failure   500 {object} http.HttpResponse
 // @Security  BearerAuth
 // @Param     account_id path int true "Account ID"
 // @Router    /api/v1/auth/account/{account_id} [delete]

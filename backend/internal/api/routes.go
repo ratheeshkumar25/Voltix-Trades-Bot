@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/ratheeshkumar25/Voltix-Trades-Bot/internal/handler"
+	"github.com/ratheeshkumar25/Voltix-Trades-Bot/internal/middleware"
 )
 
 func SetupRoutes(app *fiber.App, h *handler.AuthServiceHandler) {
@@ -14,20 +15,16 @@ func SetupRoutes(app *fiber.App, h *handler.AuthServiceHandler) {
 	auth.Get("/google", h.GoogleLoginHandler)
 	auth.Get("/google/callback", h.GoogleCallbackHandler)
 
-	// User routes
+	// User/account routes - currently handlers implemented in handler package
 	user := api.Group("/v1/user", middleware.AuthMiddleware)
-	user.Post("/", h.CreateUser)
-	user.Get("/:email", h.GetUserByEmail) // Changed to param for better REST practice, though handler expects body currently?
-	// Wait, the handler GetUserByEmail uses c.Params("email") now after my fix.
-	// But let's check the handler again to be sure.
-	user.Get("/id/:id", h.GetUserByID)
-	user.Get("/google/:google_id", h.GetUserByGoogleID)
-	user.Put("/", h.UpdateUser)
-	user.Delete("/", h.DeleteUser)
+	// NOTE: handlers `UpdateUser` and `DeleteUser` were not present in handler package
+	// Register only implemented account handlers
+	user.Put("/account", h.UpdateAccountHandler)
+	user.Delete("/account", h.DeleteAccountHandler)
 
-	// Exchange routes
-	exchange := api.Group("/v1/exchange", middleware.AuthMiddleware)
-	exchange.Post("/", h.AddExchangeCredential)
-	exchange.Get("/", h.GetExchangeCredentials)
-	exchange.Post("/switch", h.SwitchExchangeAccount)
+	// Exchange routes (TODO): add when exchange handlers are implemented
+	// exchange := api.Group("/v1/exchange", middleware.AuthMiddleware)
+	// exchange.Post("/", h.AddExchangeCredential)
+	// exchange.Get("/", h.GetExchangeCredentials)
+	// exchange.Post("/switch", h.SwitchExchangeAccount)
 }

@@ -1,0 +1,100 @@
+basePath: /api
+definitions:
+  handler.UptAccount:
+    properties:
+      details:
+        type: string
+      name:
+        type: string
+    type: object
+  http.HttpResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+host: localhost:3000
+info:
+  contact:
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Trading Bot Backend API with OAuth2 and JWT authentication
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Trading Bot API
+  version: "1.0"
+paths:
+  /api/v1/auth/account/{account_id}:
+    delete:
+      operationId: DeleteAccount
+      parameters:
+      - description: Account ID
+        in: path
+        name: account_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Account
+      tags:
+      - Accounts
+    put:
+      consumes:
+      - application/json
+      description: Update Account
+      operationId: UpdateAccount
+      parameters:
+      - description: Account ID
+        in: path
+        name: account_id
+        required: true
+        type: integer
+      - description: Account Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UptAccount'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - Accounts
+schemes:
+- http
+- https
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
