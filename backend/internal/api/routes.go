@@ -19,6 +19,7 @@ func SetupRoutes(app *fiber.App, h *handler.AuthServiceHandler) {
 	user := api.Group("/v1/user", middleware.AuthMiddleware)
 	// NOTE: handlers `UpdateUser` and `DeleteUser` were not present in handler package
 	// Register only implemented account handlers
+	user.Get("/me", h.MeHandler)
 	user.Post("/account", h.EmailRegisterHandler)
 	user.Put("/account", h.UpdateAccountHandler)
 	user.Delete("/account", h.DeleteAccountHandler)

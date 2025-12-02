@@ -150,6 +150,59 @@ func (h *AuthServiceHandler) GoogleCallbackHandler(c *fiber.Ctx) error {
 
 }
 
+type MeResponse struct {
+	ID           string `json:"id"`
+	Email        string `json:"email"`
+	Role         string `json:"role"`
+	Subscription struct {
+		Plan          string `json:"plan"`
+		Status        string `json:"status"`
+		DaysRemaining int    `json:"days_remaining"`
+		EndDate       string `json:"end_date"`
+	} `json:"subscription"`
+}
+
+// @Id GetCurrentUser
+// @Summary Get current user profile
+// @Description Get current authenticated user's profile and subscription information
+// @Tags User
+// @Produce json
+// @Success 200 {object} http.HttpResponse
+// @Failure 401 {object} http.HttpResponse
+// @Failure 500 {object} http.HttpResponse
+// @Security BearerAuth
+// @Router /api/v1/user/me [get]
+// MeHandler returns current user info
+func (h *AuthServiceHandler) MeHandler(c *fiber.Ctx) error {
+	// Get user from context (set by auth middleware)
+	user := c.Locals("user").(*models.User)
+
+	// Get subscription
+	subscription, err := h.SVC.GetUserSubscription(user.ID)
+	if err != nil {
+		return h.App.HttpResponseInternalServerErrorRequest(c, err)
+	}
+
+	response := MeResponse{
+		ID:    user.ID.String(),
+		Email: user.Email,
+		Role:  string(user.Role),
+		Subscription: struct {
+			Plan          string `json:"plan"`
+			Status        string `json:"status"`
+			DaysRemaining int    `json:"days_remaining"`
+			EndDate       string `json:"end_date"`
+		}{
+			Plan:          models.PlanType_name[int32(subscription.Subscription)],
+			Status:        models.PlanStatus_name[int32(subscription.Status)],
+			DaysRemaining: subscription.DaysRemaining(),
+			EndDate:       subscription.EndDate.String(),
+		},
+	}
+
+	return h.App.HttpResponseOK(c, response)
+}
+
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
