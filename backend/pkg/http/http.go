@@ -79,25 +79,27 @@ type WSResponse struct {
 }
 
 // HTTP 200 OK response
-func (a *App) HttpResponseok(c *fiber.Ctx, data interface{}) *HttpResponse {
-	return &HttpResponse{
-		Success: true,
-		Code:    StatusOK,
-		Data:    data,
-		Error:   "",
-		Message: "",
-	}
+func (a *App) HttpResponseOK(c *fiber.Ctx, data interface{}) error {
+	return c.Status(StatusOK).JSON(
+		&HttpResponse{
+			Success: true,
+			Code:    StatusOK,
+			Data:    data,
+			Error:   "",
+			Message: "",
+		})
 }
 
-// HTTP 201 Created response
-func (a *App) HttpResponseCreated(c *fiber.Ctx, data interface{}) *HttpResponse {
-	return &HttpResponse{
-		Success: true,
-		Code:    StatusCreated,
-		Data:    data,
-		Error:   "",
-		Message: "",
-	}
+// http 201 created http response
+func (a *App) HttpResponseCreated(c *fiber.Ctx, data interface{}) error {
+	return c.Status(StatusCreated).JSON(
+		&HttpResponse{
+			Success: true,
+			Code:    StatusCreated,
+			Data:    data,
+			Error:   "",
+			Message: "",
+		})
 }
 
 // HTTP 204 No Content response

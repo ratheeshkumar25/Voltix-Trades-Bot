@@ -25,6 +25,7 @@ type AuthRepositoryInterface interface {
 	GetUserByID(id uuid.UUID) (*models.User, error)
 	GetUserByGoogleID(googleID string) (*models.User, error)
 	AuthenticateUser(email, password string) (*models.User, error)
+	DeleteUser(id uuid.UUID) error
 	CreateTrialSubscription(userID uuid.UUID) error
 	GetUserSubscription(userID uuid.UUID) (*models.Subscription, error)
 	UpdateUserStatus(user *models.User) error
@@ -32,4 +33,5 @@ type AuthRepositoryInterface interface {
 	AddExchangeCredential(cred *models.ExchangeCredential) error
 	GetExchangeCredentials(userID uuid.UUID) ([]models.ExchangeCredential, error)
 	UpdateExchangeCredential(cred *models.ExchangeCredential) error
+	DeleteExchangeCredential(id uuid.UUID) error
 }

@@ -23,3 +23,8 @@ func (r *AuthRepository) UpdateExchangeCredential(cred *models.ExchangeCredentia
 	result := r.DB.Save(cred)
 	return result.Error
 }
+
+func (r *AuthRepository) DeleteExchangeCredential(id uuid.UUID) error {
+	result := r.DB.Delete(&models.ExchangeCredential{}, "id = ?", id)
+	return result.Error
+}

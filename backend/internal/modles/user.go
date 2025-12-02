@@ -50,6 +50,7 @@ var (
 type User struct {
 	ID           uuid.UUID      `gorm:"type:char(36);primaryKey" json:"id"`
 	Email        string         `gorm:"uniqueIndex;not null" json:"email"`
+	Name         string         `gorm:"type:varchar(100)" json:"name"`
 	GoogleID     string         `gorm:"uniqueIndex" json:"google_id,omitempty"`
 	PasswordHash string         `gorm:"column:password_hash" json:"-"`
 	Role         UserRole       `gorm:"type:varchar(20);default:'user'" json:"role"` // user, admin

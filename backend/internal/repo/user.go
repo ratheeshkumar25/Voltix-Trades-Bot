@@ -73,3 +73,9 @@ func (r *AuthRepository) UpdateUserStatus(user *models.User) error {
 	result := r.DB.Save(user)
 	return result.Error
 }
+
+// Delete user by ID
+func (r *AuthRepository) DeleteUser(id uuid.UUID) error {
+	result := r.DB.Delete(&models.User{}, "id = ?", id)
+	return result.Error
+}
