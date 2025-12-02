@@ -69,3 +69,19 @@ func (s *UserService) AuthenticateUser(email, password string) (*models.User, er
 func (s *UserService) CreateSession(session *models.Session) error {
 	return s.Repo.CreateSession(session)
 }
+
+// UpdateUser updates user details
+func (s *UserService) UpdateUser(user *models.User) (*models.User, error) {
+	if err := s.Repo.UpdateUserStatus(user); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+// DeleteUser deletes a user
+func (s *UserService) DeleteUser(user *models.User) (*models.User, error) {
+	if err := s.Repo.DeleteUser(user.ID); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
