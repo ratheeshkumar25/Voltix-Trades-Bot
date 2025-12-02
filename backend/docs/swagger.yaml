@@ -280,6 +280,30 @@ paths:
       summary: Update Account
       tags:
       - Accounts
+  /api/v1/user/me:
+    get:
+      description: Get current authenticated user's profile and subscription information
+      operationId: GetCurrentUser
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.HttpResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - User
 schemes:
 - http
 - https

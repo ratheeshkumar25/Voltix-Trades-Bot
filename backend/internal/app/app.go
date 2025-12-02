@@ -21,8 +21,12 @@ func StartApp() {
 	})
 
 	//Global middleware
+	corsOrigins := os.Getenv("CORS_ORIGINS")
+	if corsOrigins == "" {
+		corsOrigins = "http://localhost:5173,http://localhost:3000"
+	}
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     os.Getenv("CORS_ORIGINS"),
+		AllowOrigins:     corsOrigins,
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS",
 		AllowCredentials: true,
