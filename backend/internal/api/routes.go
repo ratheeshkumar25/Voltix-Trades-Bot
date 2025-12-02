@@ -12,7 +12,9 @@ func SetupRoutes(app *fiber.App, h *handler.AuthServiceHandler) {
 	// Auth routes
 	auth := api.Group("/auth")
 	auth.Post("/login", h.EmailLoginHandler)
-	auth.Get("/google", h.GoogleLoginHandler)
+	auth.Post("/register", h.EmailRegisterHandler)  // Frontend uses this endpoint
+	auth.Post("/google", h.GoogleCredentialHandler) // Credential-based OAuth for frontend
+	auth.Get("/google/login", h.GoogleLoginHandler) // Redirect-based OAuth
 	auth.Get("/google/callback", h.GoogleCallbackHandler)
 
 	// User/account routes - currently handlers implemented in handler package

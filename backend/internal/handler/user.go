@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -148,6 +149,84 @@ func (h *AuthServiceHandler) GoogleCallbackHandler(c *fiber.Ctx) error {
 		"token": jwtToken,
 	})
 
+}
+
+type GoogleCredentialRequest struct {
+	Credential string `json:"credential"`
+}
+
+// @Id Google Credential Handler
+// @Summary Google Credential Handler
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param credential body handler.GoogleCredentialRequest true "Google Credential Token"
+// @Success 200 {object} http.HttpResponse
+// @Router /api/auth/google [post]
+// GoogleCredentialHandler handles Google OAuth with credential token (for frontend popup flow)
+func (h *AuthServiceHandler) GoogleCredentialHandler(c *fiber.Ctx) error {
+	var req GoogleCredentialRequest
+	if err := c.BodyParser(&req); err != nil {
+		return h.App.HttpResponseBadRequest(c, err)
+	}
+
+	// Verify Google token
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + req.Credential)
+	if err != nil {
+		return h.App.HttpResponseInternalServerErrorRequest(c, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return h.App.HttpResponseUnauthorized(c, errors.New("invalid google token"))
+	}
+
+	data, _ := io.ReadAll(resp.Body)
+	var googleUser struct {
+		Sub   string `json:"sub"` // Google user ID
+		Email string `json:"email"`
+		Name  string `json:"name"`
+	}
+	json.Unmarshal(data, &googleUser)
+
+	// Check if user exists or create new user
+	user, err := h.SVC.GetUserByGoogleID(googleUser.Sub)
+	if err != nil {
+		user, err = h.SVC.CreateUser(googleUser.Email, "", &googleUser.Sub)
+		if err != nil {
+			return h.App.HttpResponseInternalServerErrorRequest(c, err)
+		}
+	}
+
+	// Generate JWT for the user
+	jwtToken, err := oauth.GenerateJWT(user)
+	if err != nil {
+		return h.App.HttpResponseInternalServerErrorRequest(c, err)
+	}
+
+	users := models.User{
+		ID:       user.ID,
+		Email:    user.Email,
+		Role:     user.Role,
+		GoogleID: googleUser.Sub,
+	}
+
+	// Create Session
+	session := models.Session{
+		UserID:    user.ID,
+		Token:     jwtToken,
+		ExpiresAt: time.Now().Add(24 * time.Hour),
+	}
+
+	if err := h.SVC.CreateSession(&session); err != nil {
+		return h.App.HttpResponseInternalServerErrorRequest(c, err)
+	}
+
+	return h.App.HttpResponseCreated(c, map[string]interface{}{
+		"user":  users,
+		"token": jwtToken,
+	})
 }
 
 type MeResponse struct {
