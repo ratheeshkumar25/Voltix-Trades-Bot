@@ -1,19 +1,24 @@
 package main
 
-import "github.com/ratheeshkumar25/Voltix-Trades-Bot/internal/di"
+import (
+	_ "github.com/ratheeshkumar25/Voltix-Trades-Bot/docs"
+	"github.com/ratheeshkumar25/Voltix-Trades-Bot/internal/app"
+)
 
+// @title Trading Bot API
+// @version 1.0
+// @description Trading Bot Backend API with OAuth2 and JWT authentication
+// @termsOfService http://swagger.io/terms/
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @host localhost:3000
+// @BasePath /api
+// @schemes http https
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
-	app := fiber.New()
-
-	// Initialize dependencies and handlers
-	handler := di.Initialize(app)
-
-	if handler == nil {
-		log.Fatal("failed to initialize application")
-	}
-
-	// The actual server start may be elsewhere; for now just start Fiber
-	if err := app.Listen(":3000"); err != nil {
-		log.Fatalf("failed to start server: %v", err)
-	}
+	app.StartApp()
 }

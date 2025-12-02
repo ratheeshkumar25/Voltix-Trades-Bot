@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/ratheeshkumar25/Voltix-Trades-Bot/internal/config"
 	"github.com/ratheeshkumar25/Voltix-Trades-Bot/internal/di"
+	"github.com/ratheeshkumar25/Voltix-Trades-Bot/internal/handler"
 )
 
 func StartApp() {
@@ -31,7 +32,12 @@ func StartApp() {
 
 	authHandler := di.Initialize(app)
 
-	authHandler.InitOAuth()
+	if authHandler == nil {
+		log.Fatal("Failed to initialize application")
+	}
+
+	// Initialize OAuth config using the handler package function
+	handler.InitOAuth(authHandler)
 
 	// Load configuration
 	cfg, err := config.LoadConfig()

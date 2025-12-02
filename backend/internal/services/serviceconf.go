@@ -20,6 +20,26 @@ type UserService struct {
 	App  *http.App
 }
 
+// GetUserByEmail implements UserServiceInterface.
+func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
+	panic("unimplemented")
+}
+
+// GetUserByGoogleID implements UserServiceInterface.
+func (s *UserService) GetUserByGoogleID(googleID string) (*models.User, error) {
+	panic("unimplemented")
+}
+
+// GetUserByID implements UserServiceInterface.
+func (s *UserService) GetUserByID(id uuid.UUID) (*models.User, error) {
+	panic("unimplemented")
+}
+
+// GetUserSubscription implements UserServiceInterface.
+func (s *UserService) GetUserSubscription(userID uuid.UUID) (*models.Subscription, error) {
+	panic("unimplemented")
+}
+
 func NewUserService(app *http.App, repo repo.AuthRepositoryInterface) *UserService {
 	return &UserService{
 		Repo: repo,

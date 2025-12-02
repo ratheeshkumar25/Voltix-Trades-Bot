@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: trading-bot-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-trading_bot}
+      MYSQL_USER: ${DB_USER:-trading_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-trading_pass}
+      MYSQL_TCP_PORT: ${DB_PORT:-3306}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 3s
+      retries: 10
+      interval: 10s
+    networks:
+      - trading-bot-network
+
+  # Trading Bot Backend
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GO_VERSION: "1.24"
+        GIT_COMMIT: "development"
+        BUILD_TIME: "dev"
+    container_name: trading-bot-app
+    restart: unless-stopped
+    environment:
+      ENV: ${ENV}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-http://localhost:3000/api/auth/google/callback}
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/bin
+    networks:
+      - trading-bot-network
+    command: /usr/local/bin/trading-bot
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  trading-bot-network:
+    driver: bridge

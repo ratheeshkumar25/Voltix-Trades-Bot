@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build
+bin/
+dist/
+*.o
+*.a
+*.so
+
+# Logs
+*.log
+logs/
+
+# Temp
+tmp/
+temp/
+*.tmp
+
+# Dependencies
+vendor/
+node_modules/
+
+# Test coverage
+coverage.out
+coverage.html
+*.cover
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+docs/
+README.md
+
+# Makefile and scripts
+Makefile
+scripts/
+
+# Frontend
+frontend/
